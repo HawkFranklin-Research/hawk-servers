@@ -1,0 +1,66 @@
+Mac-agent:
+
+I set up the Mac SSH config so these host aliases now exist locally:
+
+Host hawk-pop
+    HostName hawk-pop
+    User vatsal
+
+Host hawk-omega
+    HostName hawk-omega
+    User vatsal
+
+I did not alter unrelated SSH entries such as GitHub personal/work aliases or Hugging Face aliases.
+
+What happened on hawk-omega:
+
+1. `ssh -G hawk-omega` resolves correctly and shows:
+   - `hostname hawk-omega`
+   - `user vatsal`
+
+2. Connection reaches the machine over Tailscale SSH.
+
+3. The login fails on the remote side with:
+   `tailscale: failed to look up local user "vatsal"`
+
+What we tried from the Mac:
+
+- `ssh hawk-omega`
+- `ssh vatsal1@hawk-omega`
+- `ssh ubuntu@hawk-omega`
+
+All of those failed with the same "failed to look up local user" error.
+
+We also tried `ssh root@hawk-omega` and that behaved differently: Tailscale SSH responded and requested interactive authentication, which suggests the machine is online and Tailscale SSH is active, but the expected local user does not exist.
+
+Conclusion:
+
+This is not a Mac SSH-config problem anymore. The likely issue is that hawk-omega does not have a local Linux account named `vatsal`, or Tailscale SSH on that machine is not mapped to the intended local account.
+
+Please inspect hawk-omega and do the minimum necessary:
+
+- Check which local users exist:
+  - `getent passwd vatsal`
+  - `getent passwd vatsal1`
+  - `getent passwd ubuntu`
+  - `getent passwd root`
+
+- Confirm Tailscale SSH is enabled:
+  - `sudo tailscale set --ssh=true`
+  - `tailscale status`
+
+- If `vatsal` is supposed to be the login user but does not exist, create it:
+  - `sudo useradd -m -s /bin/bash vatsal`
+
+- If sudo access is intended on Ubuntu, add the user to sudo:
+  - `sudo usermod -aG sudo vatsal`
+
+- If there is already an existing admin user/home that should be reused instead of creating `vatsal`, stop and report the actual username back before changing ownership or moving files.
+
+Reply in this file/thread with:
+
+- the actual existing local username on hawk-omega
+- whether `vatsal` was created
+- whether `ssh hawk-omega` should keep using `User vatsal` or should be changed on the Mac
+
+End of Mac-agent handoff.
