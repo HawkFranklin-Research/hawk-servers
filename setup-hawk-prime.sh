@@ -34,6 +34,11 @@ HandleLidSwitchDocked=ignore
 IdleAction=ignore
 EOF
 
+if getent passwd "$AUTO_LOGIN_USER" >/dev/null; then
+  echo "==> Enabling user lingering for ${AUTO_LOGIN_USER}"
+  loginctl enable-linger "$AUTO_LOGIN_USER" || true
+fi
+
 if [[ -f /etc/gdm3/custom.conf ]] && getent passwd "$AUTO_LOGIN_USER" >/dev/null; then
   echo "==> Enabling GDM automatic login for ${AUTO_LOGIN_USER}"
   cp -n /etc/gdm3/custom.conf /etc/gdm3/custom.conf.hawk-prime.bak
@@ -74,6 +79,12 @@ if command -v nmcli >/dev/null 2>&1; then
     echo "==> Making Wi-Fi connection '${ACTIVE_WIFI_CONNECTION}' available before desktop login"
     nmcli connection modify "$ACTIVE_WIFI_CONNECTION" connection.autoconnect yes connection.permissions '' || true
   fi
+fi
+
+if command -v gsettings >/dev/null 2>&1 && command -v dbus-run-session >/dev/null 2>&1 && getent passwd "$AUTO_LOGIN_USER" >/dev/null; then
+  echo "==> Disabling GNOME automatic suspend on AC power for ${AUTO_LOGIN_USER}"
+  runuser -u "$AUTO_LOGIN_USER" -- dbus-run-session gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing' || true
+  runuser -u "$AUTO_LOGIN_USER" -- dbus-run-session gsettings set org.gnome.desktop.session idle-delay 0 || true
 fi
 
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -q '^Status: active'; then

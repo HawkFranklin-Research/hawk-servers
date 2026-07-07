@@ -1,5 +1,11 @@
 # Hawk Delta Access Manual
 
+For the current `hawk-prime` server setup, read:
+
+```text
+HAWK_PRIME_SERVER_MANUAL.md
+```
+
 ## Purpose
 
 `hawk-delta` is a lightweight secondary server managed from `hawk-omega`.
